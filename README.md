@@ -47,3 +47,16 @@ Fixtures are used by automated parser tests. Keep malformed examples separate fr
 ## Architecture notes
 
 CSV parsing and export logic live in `src/lib/csv/`. The dataset model lives in `src/features/dataset/`, while React components handle import, preview, and export interactions. Parsing does not normalize values or apply data-cleaning operations.
+
+## Dataset analysis (Phase 2 — initial rules)
+
+The read-only analysis rules are implemented in `src/features/analysis`:
+
+- `analyzeDataset(dataset)` runs the available read-only analysis rules and returns the issues plus the analyzed row/column counts.
+- `detectTrimWhitespace(dataset)` reports leading/trailing whitespace, grouped by affected column.
+- `detectDuplicateRows(dataset)` groups rows with exactly matching values across all columns. It reports all row IDs in each group and does not select or remove a record.
+- Duplicate comparison is exact: whitespace and letter case are significant.
+- Each issue includes stable row/column references and an affected-cell count.
+- Analysis never changes dataset values. Applying corrections is intentionally not part of this phase.
+
+Run the tests with `npm run test:run`, then verify the project with `npm run build` and `npm run lint`.
