@@ -1,0 +1,17 @@
+.csv-import__dropzone {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 42px 22px;
+  border: 2px dashed #b9cbbd;
+  border-radius: 14px;
+  background: #fbfdfb;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+.csv-import__dropzone:hover, .csv-import__dropzone--dragging { border-color: #39825d; background: #f0f8f2; }
+.csv-import__dropzone strong { color: #23392b; font-size: 16px; }
+.csv-import__dropzone span { color: #647067; font-size: 14px; }
+.csv-import__icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 4px; border-radius: 12px; background: #e8f4ec; color: #176b48; font-size: 23px; }
+.csv-import__error { margin: 14px 0 0; padding: 11px 13px; border-radius: 8px; color: #8f2118; background: #fff0ee; font-size: 14px; }

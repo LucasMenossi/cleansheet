@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { CsvParseError, parseCsv } from "../../lib/csv/parse-csv";
 import type { Dataset } from "../../features/dataset/types";
+import "./csv-import.css";
 
 type CsvImportProps = {
   onImport: (dataset: Dataset, delimiter: string) => void;
@@ -10,33 +11,35 @@ export function CsvImport({ onImport }: CsvImportProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isReading, setIsReading] = useState(false);
 
   async function handleFile(file?: File) {
     setError(null);
-
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
-      setError("Selecione um arquivo CSV.");
+      setError("Selecione um arquivo com extensão .csv.");
       return;
     }
 
+    setIsReading(true);
     try {
       const content = await file.text();
       const result = parseCsv(content);
-
       onImport(result.dataset, result.delimiter);
     } catch (cause) {
       setError(
         cause instanceof CsvParseError
           ? cause.message
-          : "Não foi possível ler o arquivo. Tente novamente.",
+          : "Não foi possível ler o arquivo. Verifique se ele é um CSV válido e tente novamente.",
       );
+    } finally {
+      setIsReading(false);
     }
   }
 
   return (
-    <section>
+    <section className="csv-import" aria-label="Importação de CSV">
       <input
         ref={inputRef}
         type="file"
@@ -44,24 +47,33 @@ export function CsvImport({ onImport }: CsvImportProps) {
         hidden
         aria-label="Selecionar arquivo CSV"
         onChange={(event) => {
-          void handleFile(event.target.files?.[0]);
+          void handleFile(event.currentTarget.files?.[0]);
           event.currentTarget.value = "";
         }}
       />
 
       <div
+        className={`csv-import__dropzone${isDragging ? " csv-import__dropzone--dragging" : ""}`}
+        onDragEnter={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
         onDragOver={(event) => {
           event.preventDefault();
           setIsDragging(true);
         }}
-        onDragLeave={() => setIsDragging(false)}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            setIsDragging(false);
+          }
+        }}
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
           void handleFile(event.dataTransfer.files[0]);
         }}
         onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
+          if (!isReading && (event.key === "Enter" || event.key === " ")) {
             event.preventDefault();
             inputRef.current?.click();
           }
@@ -69,25 +81,16 @@ export function CsvImport({ onImport }: CsvImportProps) {
         role="button"
         tabIndex={0}
         aria-label="Área para importar CSV"
-        style={{
-          padding: "40px 24px",
-          border: "2px dashed #aaa",
-          borderRadius: 12,
-          textAlign: "center",
-          background: isDragging ? "#f0f7ff" : "transparent",
-          cursor: "pointer",
-        }}
-        onClick={() => inputRef.current?.click()}
+        aria-disabled={isReading}
+        onClick={() => !isReading && inputRef.current?.click()}
       >
-        <p>Arraste um arquivo CSV para cá</p>
-        <p>ou clique para selecionar</p>
+        <span className="csv-import__icon" aria-hidden="true">↑</span>
+        <strong>{isReading ? "Lendo arquivo…" : "Arraste seu arquivo CSV para cá"}</strong>
+        <span>ou clique para selecionar um arquivo do computador</span>
+        <span>Formato aceito: .csv · Processamento local</span>
       </div>
 
-      {error && (
-        <p role="alert" style={{ color: "#b42318" }}>
-          {error}
-        </p>
-      )}
+      {error && <p role="alert" className="csv-import__error">{error}</p>}
     </section>
   );
 }
