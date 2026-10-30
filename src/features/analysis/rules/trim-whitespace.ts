@@ -1,4 +1,5 @@
 import type { Dataset } from "../../dataset/types";
+import { getCellValue } from "../../dataset/get-cell-value";
 import type { DataIssue } from "../types";
 
 export const TRIM_WHITESPACE_RULE_ID = "trim-whitespace";
@@ -12,7 +13,7 @@ export function detectTrimWhitespace(dataset: Dataset): DataIssue[] {
   return dataset.columns.flatMap((column) => {
     const affectedRowIds = dataset.rows
       .filter((row) => {
-        const value = row.values[column.id];
+        const value = getCellValue(row, column);
         return typeof value === "string" && value !== value.trim();
       })
       .map((row) => row.id);

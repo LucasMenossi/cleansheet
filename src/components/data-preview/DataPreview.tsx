@@ -10,9 +10,17 @@ import type { Dataset } from "../../features/dataset/types";
 
 type DataPreviewProps = {
   dataset: Dataset;
+  highlightedRowIds?: string[];
+  highlightedColumnIds?: string[];
 };
 
-export function DataPreview({ dataset }: DataPreviewProps) {
+export function DataPreview({
+  dataset,
+  highlightedRowIds = [],
+  highlightedColumnIds = [],
+}: DataPreviewProps) {
+  const highlightedRows = new Set(highlightedRowIds);
+  const highlightedColumns = new Set(highlightedColumnIds);
   const columns: ColumnDef<Dataset["rows"][number]>[] = dataset.columns.map(
     (column) => ({
       id: column.id,
@@ -53,9 +61,12 @@ export function DataPreview({ dataset }: DataPreviewProps) {
 
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.original.id}>
+              <tr key={row.original.id} className={highlightedRows.has(row.original.id) ? "data-preview__row--highlighted" : undefined}>
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id}>
+                  <td
+                    key={cell.id}
+                    className={highlightedRows.has(row.original.id) && highlightedColumns.has(cell.column.id) ? "data-preview__cell--highlighted" : undefined}
+                  >
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext(),

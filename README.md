@@ -63,3 +63,9 @@ The read-only analysis rules are implemented in `src/features/analysis`:
 - Analysis never changes dataset values. Applying corrections is intentionally not part of this phase.
 
 Run the tests with `npm run test:run`, then verify the project with `npm run build` and `npm run lint`.
+
+## Findings in the interface
+
+After importing a CSV, the `DataAnalysis` component displays the available findings, severity, affected columns, row numbers, and cell counts. Users can select **Ver na prévia** to highlight the affected rows and cells in the data table, then clear the highlight without changing the imported values. Repeated-value analysis remains opt-in and runs only after the user selects a column.
+
+The analysis rules read values using the stable column ID when present and fall back to the original CSV header key. This keeps analysis compatible with the current dataset import/export representation, where cell values are keyed by header text while columns also have generated IDs.

@@ -110,3 +110,5 @@ h2 { margin-bottom: 8px; font-size: 23px; letter-spacing: -0.03em; line-height: 
   .toolbar-actions { width: 100%; justify-content: flex-start; }
   .app-footer { flex-direction: column; gap: 4px; }
 }
+
+.analysis-selection-note { margin: 0 0 10px; color: #315e43; font-size: 13px; }

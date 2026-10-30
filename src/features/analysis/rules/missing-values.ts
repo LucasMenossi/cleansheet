@@ -1,4 +1,5 @@
 import type { Dataset } from "../../dataset/types";
+import { getCellValue } from "../../dataset/get-cell-value";
 import type { DataIssue } from "../types";
 
 export const MISSING_VALUES_RULE_ID = "missing-values";
@@ -11,7 +12,7 @@ export const MISSING_VALUES_RULE_ID = "missing-values";
 export function detectMissingValues(dataset: Dataset): DataIssue[] {
   return dataset.columns.flatMap((column) => {
     const affectedRowIds = dataset.rows
-      .filter((row) => row.values[column.id] === "")
+      .filter((row) => getCellValue(row, column) === "")
       .map((row) => row.id);
 
     if (affectedRowIds.length === 0) {

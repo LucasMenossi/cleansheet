@@ -1,4 +1,5 @@
 import type { Dataset } from "../../dataset/types";
+import { getCellValue } from "../../dataset/get-cell-value";
 import type { DataIssue } from "../types";
 
 export const DUPLICATE_ROWS_RULE_ID = "duplicate-rows";
@@ -15,7 +16,7 @@ export function detectDuplicateRows(dataset: Dataset): DataIssue[] {
   const rowsByValues = new Map<string, string[]>();
 
   for (const row of dataset.rows) {
-    const values = dataset.columns.map((column) => row.values[column.id]);
+    const values = dataset.columns.map((column) => getCellValue(row, column));
     const key = JSON.stringify(values);
     const matchingRowIds = rowsByValues.get(key);
 

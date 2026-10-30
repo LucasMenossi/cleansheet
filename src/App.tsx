@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { DataAnalysis } from "./components/data-analysis/DataAnalysis";
+import type { DataIssue } from "./features/analysis/types";
 import { CsvExport } from "./components/csv-export/CsvExport";
 import { CsvImport } from "./components/csv-import/CsvImport";
 import { DataPreview } from "./components/data-preview/DataPreview";
@@ -9,12 +11,14 @@ export default function App() {
   const [delimiter, setDelimiter] = useState(",");
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState<DataIssue | null>(null);
 
   function handleImport(importedDataset: Dataset, importedDelimiter: string) {
     setDataset(importedDataset);
     setDelimiter(importedDelimiter);
     setExportError(null);
     setExportSuccess(false);
+    setSelectedIssue(null);
   }
 
   function handleReset() {
@@ -22,6 +26,7 @@ export default function App() {
     setDelimiter(",");
     setExportError(null);
     setExportSuccess(false);
+    setSelectedIssue(null);
   }
 
   function handleExport(content: string) {
@@ -86,7 +91,17 @@ export default function App() {
           {exportError && <p role="alert" className="status-message status-message--error">{exportError}</p>}
           {exportSuccess && <p role="status" className="status-message status-message--success">Download do CSV iniciado.</p>}
 
-          <DataPreview dataset={dataset} />
+          <DataAnalysis dataset={dataset} onSelectIssue={setSelectedIssue} />
+          {selectedIssue && (
+            <p className="analysis-selection-note" role="status">
+              Prévia destacada: {selectedIssue.title}. Selecione “Limpar destaque” no achado para remover a marcação.
+            </p>
+          )}
+          <DataPreview
+            dataset={dataset}
+            highlightedRowIds={selectedIssue?.affectedRowIds}
+            highlightedColumnIds={selectedIssue?.affectedColumnIds}
+          />
           <p className="privacy-note">
             Nenhuma correção foi aplicada. Esta prévia mantém os valores importados.
           </p>

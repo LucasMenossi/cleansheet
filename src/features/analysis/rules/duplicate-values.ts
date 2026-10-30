@@ -1,4 +1,5 @@
 import type { Dataset } from "../../dataset/types";
+import { getCellValue } from "../../dataset/get-cell-value";
 import type { DataIssue } from "../types";
 
 export const DUPLICATE_VALUES_RULE_ID = "duplicate-values";
@@ -22,7 +23,7 @@ export function detectDuplicateValues(
   const rowsByValue = new Map<string, string[]>();
 
   for (const row of dataset.rows) {
-    const value = row.values[columnId];
+    const value = getCellValue(row, column);
 
     if (typeof value !== "string" || value.trim() === "") {
       continue;
