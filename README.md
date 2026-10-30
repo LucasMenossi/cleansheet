@@ -55,7 +55,10 @@ The read-only analysis rules are implemented in `src/features/analysis`:
 - `analyzeDataset(dataset)` runs the available read-only analysis rules and returns the issues plus the analyzed row/column counts.
 - `detectTrimWhitespace(dataset)` reports leading/trailing whitespace, grouped by affected column.
 - `detectDuplicateRows(dataset)` groups rows with exactly matching values across all columns. It reports all row IDs in each group and does not select or remove a record.
-- Duplicate comparison is exact: whitespace and letter case are significant.
+- `detectMissingValues(dataset)` reports empty-string cells by column, including affected row IDs and counts. These findings are informational and never fill or modify cells.
+- `detectDuplicateValues(dataset, columnId)` reports repeated non-blank values in one explicitly selected column. `analyzeDataset(dataset, { duplicateColumnId })` optionally includes this rule; it is not run without a selected column.
+- Missing-value detection treats only `""` as empty. Whitespace-only values are handled separately by `detectTrimWhitespace(dataset)`.
+- Duplicate comparison is exact: whitespace and letter case are significant. Duplicate-value detection ignores empty and whitespace-only cells, which are handled by the missing-value and whitespace rules.
 - Each issue includes stable row/column references and an affected-cell count.
 - Analysis never changes dataset values. Applying corrections is intentionally not part of this phase.
 
