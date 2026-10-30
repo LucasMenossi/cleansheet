@@ -2,11 +2,14 @@ import { useMemo, useState } from "react";
 import { analyzeDataset } from "../../features/analysis/analyze-dataset";
 import type { DataIssue } from "../../features/analysis/types";
 import type { Dataset } from "../../features/dataset/types";
+import type { CellChange } from "../../features/transformations/types";
+import { TrimWhitespaceReview } from "./TrimWhitespaceReview";
 import "./data-analysis.css";
 
 type DataAnalysisProps = {
   dataset: Dataset;
   onSelectIssue: (issue: DataIssue | null) => void;
+  onApplyTrim: (changes: CellChange[]) => void;
 };
 
 const RULE_LABELS: Record<string, string> = {
@@ -42,9 +45,11 @@ function getIssueDescription(issue: DataIssue, columnNames: string[], columnCoun
   }
 }
 
-export function DataAnalysis({ dataset, onSelectIssue }: DataAnalysisProps) {
+export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim }: DataAnalysisProps) {
   const [duplicateColumnId, setDuplicateColumnId] = useState("");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [reviewingIssueId, setReviewingIssueId] = useState<string | null>(null);
+  const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<string[]>([]);
   const result = useMemo(
     () => analyzeDataset(dataset, { duplicateColumnId: duplicateColumnId || undefined }),
     [dataset, duplicateColumnId],
@@ -138,6 +143,39 @@ export function DataAnalysis({ dataset, onSelectIssue }: DataAnalysisProps) {
                       Linhas do arquivo: {rowNumbers.join(", ")}
                     </p>
                   </div>
+                  {issue.ruleId === "trim-whitespace" && (
+                    <div className="analysis-issue__suggestion-actions">
+                      {dismissedSuggestionIds.includes(issue.id) ? (
+                        <button
+                          type="button"
+                          className="button button--secondary"
+                          onClick={() => setDismissedSuggestionIds((current) => current.filter((id) => id !== issue.id))}
+                        >
+                          Reabrir sugestão
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="button button--primary"
+                            onClick={() => setReviewingIssueId(reviewingIssueId === issue.id ? null : issue.id)}
+                          >
+                            {reviewingIssueId === issue.id ? "Fechar revisão" : "Revisar correção"}
+                          </button>
+                          <button
+                            type="button"
+                            className="button button--secondary"
+                            onClick={() => {
+                              setDismissedSuggestionIds((current) => [...current, issue.id]);
+                              setReviewingIssueId(null);
+                            }}
+                          >
+                            Descartar sugestão
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="button button--secondary analysis-issue__action"
@@ -146,6 +184,21 @@ export function DataAnalysis({ dataset, onSelectIssue }: DataAnalysisProps) {
                   >
                     {isSelected ? "Limpar destaque" : "Ver na prévia"}
                   </button>
+                  {issue.ruleId === "trim-whitespace" && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
+                    <TrimWhitespaceReview
+                      issue={issue}
+                      dataset={dataset}
+                      onApply={(changes) => {
+                        onApplyTrim(changes);
+                        setReviewingIssueId(null);
+                        setSelectedIssueId(null);
+                        onSelectIssue(null);
+                      }}
+                    />
+                  )}
+                  {issue.ruleId === "trim-whitespace" && dismissedSuggestionIds.includes(issue.id) && (
+                    <p className="analysis-issue__dismissed">Sugestão descartada. Nenhum dado foi alterado.</p>
+                  )}
                 </article>
               );
             })}

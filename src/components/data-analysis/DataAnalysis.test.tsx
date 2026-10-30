@@ -17,7 +17,7 @@ const dataset: Dataset = {
 
 describe("DataAnalysis", () => {
   it("shows findings from the imported dataset", () => {
-    render(<DataAnalysis dataset={dataset} onSelectIssue={vi.fn()} />);
+    render(<DataAnalysis dataset={dataset} onSelectIssue={vi.fn()} onApplyTrim={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
     expect(screen.getByText("Espaços extras" )).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe("DataAnalysis", () => {
 
   it("runs duplicate-value analysis only after a column is selected", () => {
     const onSelectIssue = vi.fn();
-    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} />);
+    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} />);
 
     expect(screen.queryByText("Valores repetidos")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Verificar valores repetidos em uma coluna"), {
@@ -41,7 +41,7 @@ describe("DataAnalysis", () => {
 
   it("notifies the parent when a finding is selected and cleared", () => {
     const onSelectIssue = vi.fn();
-    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} />);
+    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} />);
 
     fireEvent.click(screen.getAllByRole("button", { name: "Ver na prévia" })[0]);
     expect(onSelectIssue).toHaveBeenLastCalledWith(expect.objectContaining({ ruleId: "trim-whitespace" }));

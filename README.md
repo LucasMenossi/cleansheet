@@ -69,3 +69,15 @@ Run the tests with `npm run test:run`, then verify the project with `npm run bui
 After importing a CSV, the `DataAnalysis` component displays the available findings, severity, affected columns, row numbers, and cell counts. Users can select **Ver na prévia** to highlight the affected rows and cells in the data table, then clear the highlight without changing the imported values. Repeated-value analysis remains opt-in and runs only after the user selects a column.
 
 The analysis rules read values using the stable column ID when present and fall back to the original CSV header key. This keeps analysis compatible with the current dataset import/export representation, where cell values are keyed by header text while columns also have generated IDs.
+
+
+## Review and transformations (Phase 3 — initial slice)
+
+- Whitespace findings expose a review panel with the original value and the trimmed proposal for each affected row.
+- Users can select individual suggestions, apply only the selected changes, or dismiss and reopen the suggestion without changing data.
+- `applyTransformation(dataset, transformation)` applies approved cell changes immutably. Changes are checked against their original values to avoid applying stale suggestions.
+- The imported dataset is retained separately from the working result. The current result is used for preview and export.
+- The application keeps dataset snapshots for undo and redo. Importing another CSV resets the history.
+- The preview reports original and current row/column counts.
+
+Only the predictable whitespace correction is included in this first Phase 3 slice. Duplicate-row resolution and other potentially destructive decisions remain manual and are not automated.

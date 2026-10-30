@@ -49,3 +49,31 @@ it("shows analysis findings for the imported CSV and highlights affected cells",
   expect(screen.getByText(/Prévia destacada:/)).toBeInTheDocument();
   expect(document.querySelector("td.data-preview__cell--highlighted")).not.toBeNull();
 });
+
+
+it("reviews and applies selected whitespace fixes, then supports undo and redo", async () => {
+  const csv = "name,city\n  Maria  , Curitiba \nJoão,Londrina";
+  const file = new File([csv], "customers.csv", { type: "text/csv" });
+  Object.defineProperty(file, "text", { value: vi.fn().mockResolvedValue(csv) });
+
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), { target: { files: [file] } });
+
+  expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole("button", { name: "Revisar correção" })[0]);
+  const reviewedValues = Array.from(document.querySelectorAll(".trim-review code"))
+    .map((element) => element.textContent);
+  expect(reviewedValues).toContain('"  Maria  "');
+  expect(reviewedValues).toContain('"Maria"');
+
+  fireEvent.click(screen.getByRole("button", { name: "Aplicar correção selecionada" }));
+  expect(screen.getByText("Maria")).toBeInTheDocument();
+  expect(screen.getByText("1 alteração aplicada")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
+  expect(document.querySelector("tbody tr td")?.textContent).toBe("  Maria  ");
+  expect(screen.getByText("0 alterações aplicadas")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Refazer" }));
+  expect(screen.getByText("Maria")).toBeInTheDocument();
+});

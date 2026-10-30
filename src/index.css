@@ -112,3 +112,9 @@ h2 { margin-bottom: 8px; font-size: 23px; letter-spacing: -0.03em; line-height: 
 }
 
 .analysis-selection-note { margin: 0 0 10px; color: #315e43; font-size: 13px; }
+
+.history-actions { display: flex; gap: 6px; }
+.history-actions .button:disabled { opacity: .45; cursor: not-allowed; }
+.dataset-version-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+.dataset-version-summary span { padding: 6px 9px; border: 1px solid var(--color-border); border-radius: 7px; color: var(--color-muted); background: #fff; font-size: 11px; }
+@media (max-width: 720px) { .history-actions { width: 100%; } .history-actions .button { flex: 1; } }

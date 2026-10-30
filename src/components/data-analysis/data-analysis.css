@@ -39,3 +39,28 @@
   .analysis-issue { flex-direction: column; gap: 12px; }
   .analysis-issue__action { width: 100%; }
 }
+
+.analysis-issue__suggestion-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+.analysis-issue__suggestion-actions .button { min-height: 34px; font-size: 12px; }
+.analysis-issue__dismissed { margin: 10px 0 0; color: var(--color-muted); font-size: 12px; }
+.trim-review { display: grid; gap: 12px; width: 100%; margin-top: 14px; padding: 14px; border: 1px solid #cbdccf; border-radius: 10px; background: #f7fbf7; }
+.trim-review__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.trim-review__header strong { color: var(--color-ink); font-size: 13px; }
+.trim-review__header p { margin: 4px 0 0; color: var(--color-muted); font-size: 12px; }
+.trim-review__header > span { color: #3f654c; font-size: 12px; font-weight: 650; }
+.trim-review__list { display: grid; gap: 7px; }
+.trim-review__item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #e1e9e2; border-radius: 8px; background: #fff; cursor: pointer; }
+.trim-review__item input { width: 16px; height: 16px; flex: 0 0 auto; accent-color: #28744a; }
+.trim-review__row { min-width: 64px; color: #647067; font-size: 11px; font-weight: 650; }
+.trim-review__values { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; min-width: 0; }
+.trim-review__values > span:not(.trim-review__arrow) { display: grid; gap: 3px; min-width: 0; }
+.trim-review__values small { color: var(--color-muted); font-size: 10px; }
+.trim-review__values code { max-width: 100%; padding: 3px 6px; border-radius: 4px; background: #f0f3f0; color: #344238; font-size: 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.trim-review__arrow { color: #728176; }
+.trim-review__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.trim-review__actions .button { min-height: 36px; font-size: 12px; }
+@media (max-width: 560px) { .trim-review__item { align-items: flex-start; } .trim-review__values { flex-direction: column; align-items: flex-start; gap: 5px; } .trim-review__arrow { display: none; } .trim-review__actions .button { width: 100%; } }
+.analysis-issue { flex-wrap: wrap; }
+.analysis-issue__main { flex: 1 1 100%; }
+.analysis-issue__suggestion-actions { width: 100%; }
+.trim-review { flex: 1 1 100%; }
