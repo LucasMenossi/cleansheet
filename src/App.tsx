@@ -316,17 +316,17 @@ export default function App() {
                 : "alterações aplicadas"}
             </span>
           </div>
-          <p className="history-retention-note">
-            O histórico de desfazer e refazer mantém as últimas 50 etapas.
-          </p>
-          <section
-            className="operation-log"
-            aria-labelledby="operation-log-heading"
-          >
-            <h3 id="operation-log-heading">Alterações aplicadas</h3>
-            {appliedOperations.length === 0 ? (
-              <p>Nenhuma operação aplicada até o momento.</p>
-            ) : (
+          {(pastDatasets.length > 0 || futureDatasets.length > 0 || appliedOperations.length > 0) && (
+            <p className="history-retention-note">
+              Histórico disponível: até 50 etapas para desfazer e refazer.
+            </p>
+          )}
+          {appliedOperations.length > 0 && (
+            <details className="operation-log">
+              <summary>
+                <span>Alterações aplicadas</span>
+                <span className="operation-log__count">{appliedOperations.length}</span>
+              </summary>
               <ol>
                 {appliedOperations.map((operation) => (
                   <li key={operation.id}>
@@ -335,8 +335,8 @@ export default function App() {
                   </li>
                 ))}
               </ol>
-            )}
-          </section>
+            </details>
+          )}
           <DataAnalysis
             dataset={dataset}
             datasetRevision={datasetRevision}
@@ -350,14 +350,24 @@ export default function App() {
               destaque” no achado para remover a marcação.
             </p>
           )}
-          <DataPreview
-            key={datasetRevision}
-            dataset={dataset}
-            highlightedRowIds={selectedIssue?.affectedRowIds}
-            highlightedColumnIds={selectedIssue?.affectedColumnIds}
-            pageIndex={previewPageIndex}
-            onPageChange={setPreviewPageIndex}
-          />
+          <section className="preview-section" aria-labelledby="preview-table-heading">
+            <div className="preview-section__heading">
+              <div>
+                <p className="eyebrow">DADOS DO ARQUIVO</p>
+                <h3 id="preview-table-heading">Prévia dos registros</h3>
+                <p>Confira os valores importados e as alterações aprovadas.</p>
+              </div>
+              <span className="preview-section__page-size">Até 100 linhas por página</span>
+            </div>
+            <DataPreview
+              key={datasetRevision}
+              dataset={dataset}
+              highlightedRowIds={selectedIssue?.affectedRowIds}
+              highlightedColumnIds={selectedIssue?.affectedColumnIds}
+              pageIndex={previewPageIndex}
+              onPageChange={setPreviewPageIndex}
+            />
+          </section>
           <p className="privacy-note">
             {appliedOperations.length === 0
               ? "Nenhuma correção foi aplicada. Esta prévia mantém os valores importados."
