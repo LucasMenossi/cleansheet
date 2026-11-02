@@ -17,7 +17,7 @@ const dataset: Dataset = {
 
 describe("DataAnalysis", () => {
   it("shows findings from the imported dataset", () => {
-    render(<DataAnalysis dataset={dataset} onSelectIssue={vi.fn()} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
+    render(<DataAnalysis dataset={dataset} datasetRevision={0} onSelectIssue={vi.fn()} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
 
     expect(screen.getByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
     expect(screen.getByText("Espaços extras" )).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe("DataAnalysis", () => {
 
   it("runs duplicate-value analysis only after a column is selected", () => {
     const onSelectIssue = vi.fn();
-    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
+    render(<DataAnalysis dataset={dataset} datasetRevision={0} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
 
     expect(screen.queryByText("Valores repetidos")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Verificar valores repetidos em uma coluna"), {
@@ -41,7 +41,7 @@ describe("DataAnalysis", () => {
 
   it("opens duplicate review and sends only explicitly selected rows for removal", () => {
     const onRemoveDuplicateRows = vi.fn();
-    render(<DataAnalysis dataset={dataset} onSelectIssue={vi.fn()} onApplyTrim={vi.fn()} onRemoveDuplicateRows={onRemoveDuplicateRows} />);
+    render(<DataAnalysis dataset={dataset} datasetRevision={0} onSelectIssue={vi.fn()} onApplyTrim={vi.fn()} onRemoveDuplicateRows={onRemoveDuplicateRows} />);
     fireEvent.change(screen.getByLabelText("Verificar valores repetidos em uma coluna"), {
       target: { value: "column-email-id" },
     });
@@ -54,12 +54,18 @@ describe("DataAnalysis", () => {
     expect(screen.getByText(/Impacto: 1 registro será removido e 1 será mantido/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Remover 1 registro selecionado" }));
 
-    expect(onRemoveDuplicateRows).toHaveBeenCalledWith(["row-1"]);
+    expect(onRemoveDuplicateRows).toHaveBeenCalledWith(
+      ["row-1"],
+      [
+        { rowId: "row-1", values: { Name: " Maria ", Email: "shared@example.com" } },
+        { rowId: "row-2", values: { Name: "João", Email: "shared@example.com" } },
+      ],
+    );
   });
 
   it("notifies the parent when a finding is selected and cleared", () => {
     const onSelectIssue = vi.fn();
-    render(<DataAnalysis dataset={dataset} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
+    render(<DataAnalysis dataset={dataset} datasetRevision={0} onSelectIssue={onSelectIssue} onApplyTrim={vi.fn()} onRemoveDuplicateRows={vi.fn()} />);
 
     fireEvent.click(screen.getAllByRole("button", { name: "Ver na prévia" })[0]);
     expect(onSelectIssue).toHaveBeenLastCalledWith(expect.objectContaining({ ruleId: "trim-whitespace" }));

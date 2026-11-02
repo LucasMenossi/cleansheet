@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { analyzeDataset } from "../../features/analysis/analyze-dataset";
 import type { DataIssue } from "../../features/analysis/types";
 import type { Dataset } from "../../features/dataset/types";
@@ -9,9 +9,10 @@ import "./data-analysis.css";
 
 type DataAnalysisProps = {
   dataset: Dataset;
+  datasetRevision: number;
   onSelectIssue: (issue: DataIssue | null) => void;
   onApplyTrim: (changes: CellChange[]) => void;
-  onRemoveDuplicateRows: (rowIds: string[]) => void;
+  onRemoveDuplicateRows: (rowIds: string[], expectedRows: { rowId: string; values: Record<string, string> }[]) => void;
 };
 
 const RULE_LABELS: Record<string, string> = {
@@ -47,14 +48,31 @@ function getIssueDescription(issue: DataIssue, columnNames: string[], columnCoun
   }
 }
 
-export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDuplicateRows }: DataAnalysisProps) {
+export function DataAnalysis(props: DataAnalysisProps) {
+  const analysisDataset = useDeferredValue(props.dataset);
+  return (
+    <DataAnalysisContent
+      key={props.datasetRevision}
+      {...props}
+      analysisDataset={analysisDataset}
+    />
+  );
+}
+
+type DataAnalysisContentProps = DataAnalysisProps & { analysisDataset: Dataset };
+
+function DataAnalysisContent({ dataset, analysisDataset, onSelectIssue, onApplyTrim, onRemoveDuplicateRows }: DataAnalysisContentProps) {
   const [duplicateColumnId, setDuplicateColumnId] = useState("");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [reviewingIssueId, setReviewingIssueId] = useState<string | null>(null);
   const [dismissedSuggestionIds, setDismissedSuggestionIds] = useState<string[]>([]);
+  // Let React prioritize direct interactions while a large dataset or selected column is re-analyzed.
+  const analysisColumnId = useDeferredValue(duplicateColumnId);
+  const isAnalyzing = analysisDataset !== dataset || analysisColumnId !== duplicateColumnId;
+
   const result = useMemo(
-    () => analyzeDataset(dataset, { duplicateColumnId: duplicateColumnId || undefined }),
-    [dataset, duplicateColumnId],
+    () => analyzeDataset(analysisDataset, { duplicateColumnId: analysisColumnId || undefined }),
+    [analysisDataset, analysisColumnId],
   );
 
   function selectIssue(issue: DataIssue) {
@@ -71,9 +89,10 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
 
   const warningCount = result.issues.filter((issue) => issue.severity === "warning").length;
   const affectedRowCount = new Set(result.issues.flatMap((issue) => issue.affectedRowIds)).size;
+  const rowIndexById = new Map(analysisDataset.rows.map((row, index) => [row.id, index + 2]));
 
   return (
-    <section className="analysis-panel" aria-labelledby="analysis-heading">
+    <section className="analysis-panel" aria-labelledby="analysis-heading" aria-busy={isAnalyzing}>
       <div className="analysis-panel__header">
         <div>
           <p className="eyebrow">ANÁLISE AUTOMÁTICA</p>
@@ -88,12 +107,19 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
         </div>
       </div>
 
+      {isAnalyzing && (
+        <p className="analysis-panel__busy" role="status" aria-live="polite">
+          Atualizando a análise para os dados mais recentes…
+        </p>
+      )}
+
       <div className="analysis-panel__duplicate-filter">
         <label htmlFor="duplicate-column">Verificar valores repetidos em uma coluna</label>
         <select
           id="duplicate-column"
-          value={duplicateColumnId}
+          value={dataset.columns.some((column) => column.id === duplicateColumnId) ? duplicateColumnId : ""}
           onChange={(event) => handleColumnChange(event.target.value)}
+          disabled={isAnalyzing}
         >
           <option value="">Selecione uma coluna (opcional)</option>
           {dataset.columns.map((column) => (
@@ -117,13 +143,13 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
             {result.issues.map((issue) => {
               const isSelected = selectedIssueId === issue.id;
               const rowNumbers = issue.affectedRowIds
-                .map((rowId) => dataset.rows.findIndex((row) => row.id === rowId) + 2)
-                .filter((rowNumber) => rowNumber > 1);
+                .map((rowId) => rowIndexById.get(rowId))
+                .filter((rowNumber): rowNumber is number => rowNumber !== undefined);
               const columnNames = issue.affectedColumnIds
-                .map((columnId) => dataset.columns.find((column) => column.id === columnId)?.name)
+                .map((columnId) => analysisDataset.columns.find((column) => column.id === columnId)?.name)
                 .filter((name): name is string => Boolean(name));
               const issueTitle = getIssueTitle(issue, columnNames);
-              const issueDescription = getIssueDescription(issue, columnNames, dataset.columns.length);
+              const issueDescription = getIssueDescription(issue, columnNames, analysisDataset.columns.length);
 
               return (
                 <article className={`analysis-issue${isSelected ? " analysis-issue--selected" : ""}`} key={issue.id}>
@@ -151,6 +177,7 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
                         <button
                           type="button"
                           className="button button--secondary"
+                          disabled={isAnalyzing}
                           onClick={() => setDismissedSuggestionIds((current) => current.filter((id) => id !== issue.id))}
                         >
                           Reabrir sugestão
@@ -160,6 +187,7 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
                           <button
                             type="button"
                             className="button button--primary"
+                            disabled={isAnalyzing}
                             onClick={() => setReviewingIssueId(reviewingIssueId === issue.id ? null : issue.id)}
                           >
                             {reviewingIssueId === issue.id
@@ -169,6 +197,7 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
                           <button
                             type="button"
                             className="button button--secondary"
+                            disabled={isAnalyzing}
                             onClick={() => {
                               setDismissedSuggestionIds((current) => [...current, issue.id]);
                               setReviewingIssueId(null);
@@ -184,11 +213,12 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
                     type="button"
                     className="button button--secondary analysis-issue__action"
                     aria-pressed={isSelected}
+                    disabled={isAnalyzing}
                     onClick={() => selectIssue(issue)}
                   >
                     {isSelected ? "Limpar destaque" : "Ver na prévia"}
                   </button>
-                  {issue.ruleId === "trim-whitespace" && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
+                  {!isAnalyzing && issue.ruleId === "trim-whitespace" && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
                     <TrimWhitespaceReview
                       issue={issue}
                       dataset={dataset}
@@ -200,12 +230,12 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDupl
                       }}
                     />
                   )}
-                  {(issue.ruleId === "duplicate-rows" || issue.ruleId === "duplicate-values") && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
+                  {!isAnalyzing && (issue.ruleId === "duplicate-rows" || issue.ruleId === "duplicate-values") && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
                     <DuplicateRowsReview
                       issue={issue}
                       dataset={dataset}
-                      onRemove={(rowIds) => {
-                        onRemoveDuplicateRows(rowIds);
+                      onRemove={(rowIds, expectedRows) => {
+                        onRemoveDuplicateRows(rowIds, expectedRows);
                         setReviewingIssueId(null);
                         setSelectedIssueId(null);
                         onSelectIssue(null);

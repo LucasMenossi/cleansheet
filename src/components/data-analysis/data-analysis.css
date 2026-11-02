@@ -82,3 +82,5 @@
 .duplicate-review__decision--remove { color: #8a3f2d; background: #fae9e4; }
 .duplicate-review__impact { padding: 8px 10px; border-radius: 7px; color: #6c542f; background: #f7efdf; font-size: 12px; }
 @media (max-width: 560px) { .duplicate-review__item { grid-template-columns: 18px minmax(0, 1fr) auto; } .duplicate-review__row { grid-column: 2; } .duplicate-review__values { grid-column: 2 / -1; } .duplicate-review__decision { grid-column: 3; grid-row: 1; } }
+
+.analysis-panel__busy { margin: 0; padding: 9px 12px; border-radius: 8px; color: #5c6330; background: #fbf6df; font-size: 12px; }

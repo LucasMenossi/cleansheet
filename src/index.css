@@ -118,3 +118,5 @@ h2 { margin-bottom: 8px; font-size: 23px; letter-spacing: -0.03em; line-height: 
 .dataset-version-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
 .dataset-version-summary span { padding: 6px 9px; border: 1px solid var(--color-border); border-radius: 7px; color: var(--color-muted); background: #fff; font-size: 11px; }
 @media (max-width: 720px) { .history-actions { width: 100%; } .history-actions .button { flex: 1; } }
+
+.status-message--warning { color: #73531e; background: #fff6df; border: 1px solid #ead9a8; }

@@ -6,7 +6,7 @@ import type { DataIssue } from "../../features/analysis/types";
 type DuplicateRowsReviewProps = {
   issue: DataIssue;
   dataset: Dataset;
-  onRemove: (rowIds: string[]) => void;
+  onRemove: (rowIds: string[], expectedRows: { rowId: string; values: Record<string, string> }[]) => void;
 };
 
 export function DuplicateRowsReview({ issue, dataset, onRemove }: DuplicateRowsReviewProps) {
@@ -69,7 +69,13 @@ export function DuplicateRowsReview({ issue, dataset, onRemove }: DuplicateRowsR
           type="button"
           className="button button--primary"
           disabled={selectedRowIds.length === 0 || remainingCount < 1}
-          onClick={() => onRemove(selectedRowIds)}
+          onClick={() => onRemove(
+            selectedRowIds,
+            candidates.map((candidate) => ({
+              rowId: candidate.rowId,
+              values: { ...dataset.rows.find((row) => row.id === candidate.rowId)!.values },
+            })),
+          )}
         >
           Remover {selectedRowIds.length} {selectedRowIds.length === 1 ? "registro selecionado" : "registros selecionados"}
         </button>

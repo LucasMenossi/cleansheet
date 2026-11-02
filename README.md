@@ -80,9 +80,9 @@ The analysis rules read values using the stable column ID when present and fall 
 - The application keeps dataset snapshots for undo and redo. Importing another CSV resets the history.
 - The preview reports original and current row/column counts.
 
-Only the predictable whitespace correction is included in this first Phase 3 slice. Duplicate-row resolution and other potentially destructive decisions remain manual and are not automated.
+The predictable whitespace correction is applied only after explicit review. Duplicate-row resolution is also available through a separate record-by-record review flow; no potentially destructive decision is made automatically.
 
-### Duplicate review (Phase 3 — next slice)
+### Duplicate review (Phase 3)
 
 - Exact duplicate-row findings and selected-column repeated-value findings expose a review panel with the complete values of each affected record.
 - No row is preselected for deletion. Users explicitly mark the records to remove, while the interface requires at least one record in the duplicate group to remain.
@@ -90,3 +90,11 @@ Only the predictable whitespace correction is included in this first Phase 3 sli
 - `remove-duplicate-rows` transformations remove only the explicitly selected row IDs and return a new dataset. The original dataset remains unchanged.
 - Duplicate resolution participates in the same undo/redo history as whitespace corrections.
 - Repeated values in a selected column are only candidates: the user must inspect the other columns before deciding whether a record should be removed.
+
+## Robustness and larger files
+
+- Undo/redo stores up to the latest 50 dataset snapshots. A new approved transformation clears the redo stack; importing another file resets both stacks.
+- Trim operations are atomic: if any selected cell no longer matches the value shown during review, none of that batch is applied.
+- Duplicate-row removal captures a snapshot of every record shown in the review. If a reviewed record changes or disappears before confirmation, the removal is rejected. The transformation layer also prevents removing every record in a reviewed duplicate group.
+- Analysis uses React's deferred rendering so higher-priority interactions can proceed while a changed dataset is re-analyzed. Review and navigation actions are temporarily disabled while the displayed findings are catching up.
+- The data preview renders 100 rows per page instead of mounting every row at once. Selecting a finding navigates to the page containing its first affected record and scrolls the row into view.

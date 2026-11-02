@@ -11,3 +11,7 @@
 
 .data-preview tbody tr.data-preview__row--highlighted { background: #f4f9f5; }
 .data-preview td.data-preview__cell--highlighted { background: #e1f1e6; box-shadow: inset 0 0 0 1px #8fbea0; }
+
+.data-preview__pagination { display: flex; align-items: center; justify-content: center; gap: 12px; color: #647067; font-size: 12px; }
+.data-preview__pagination .button { min-height: 34px; font-size: 12px; }
+@media (max-width: 480px) { .data-preview__pagination { justify-content: space-between; } }

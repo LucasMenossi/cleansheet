@@ -1,0 +1,1 @@
+export const DATA_PREVIEW_PAGE_SIZE = 100;
