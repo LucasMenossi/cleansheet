@@ -123,3 +123,21 @@ describe("analyzeDataset with imported CSV-shaped values", () => {
     expect(result.issues[2].affectedRowIds).toEqual(["row-1", "row-2"]);
   });
 });
+
+describe("analyzeDataset format consistency", () => {
+  it("includes format outliers as warnings without creating a transformation", () => {
+    const dataset: Dataset = {
+      columns: [{ id: "email", name: "Email" }],
+      rows: [
+        { id: "row-1", values: { Email: "one@example.com" } },
+        { id: "row-2", values: { Email: "two@example.com" } },
+        { id: "row-3", values: { Email: "invalid-email" } },
+      ],
+    };
+    const result = analyzeDataset(dataset);
+    expect(result.issues).toEqual([
+      expect.objectContaining({ ruleId: "inconsistent-formats", severity: "warning", affectedRowIds: ["row-3"] }),
+    ]);
+    expect(dataset.rows[2].values.Email).toBe("invalid-email");
+  });
+});

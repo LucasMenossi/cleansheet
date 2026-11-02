@@ -20,6 +20,7 @@ describe("CleanSheet main flow", () => {
     fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), {
       target: { files: [file] },
     });
+    fireEvent.click(await screen.findByRole("button", { name: "Importar arquivo" }));
 
     expect(await screen.findByRole("heading", { name: "Prévia dos dados" })).toBeInTheDocument();
     expect(screen.getByText("Lucas")).toBeInTheDocument();
@@ -40,6 +41,7 @@ it("shows analysis findings for the imported CSV and highlights affected cells",
   fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), {
     target: { files: [file] },
   });
+  fireEvent.click(await screen.findByRole("button", { name: "Importar arquivo" }));
 
   expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
   expect(screen.getByText("Espaços extras")).toBeInTheDocument();
@@ -58,6 +60,7 @@ it("reviews and applies selected whitespace fixes, then supports undo and redo",
 
   render(<App />);
   fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), { target: { files: [file] } });
+  fireEvent.click(await screen.findByRole("button", { name: "Importar arquivo" }));
 
   expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
   fireEvent.click(screen.getAllByRole("button", { name: "Revisar correção" })[0]);
@@ -86,6 +89,7 @@ it("reviews duplicate values, removes only selected records, and supports undo a
 
   render(<App />);
   fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), { target: { files: [file] } });
+  fireEvent.click(await screen.findByRole("button", { name: "Importar arquivo" }));
   expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
 
   const duplicateColumn = screen.getByLabelText("Verificar valores repetidos em uma coluna") as HTMLSelectElement;
@@ -120,6 +124,7 @@ it("keeps mixed transformations in one undo and redo history", async () => {
 
   render(<App />);
   fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), { target: { files: [file] } });
+  fireEvent.click(await screen.findByRole("button", { name: "Importar arquivo" }));
   expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Revisar correção" }));

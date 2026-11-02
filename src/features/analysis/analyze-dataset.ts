@@ -4,6 +4,7 @@ import { detectTrimWhitespace } from "./rules/trim-whitespace";
 import { detectDuplicateRows } from "./rules/duplicate-rows";
 import { detectMissingValues } from "./rules/missing-values";
 import { detectDuplicateValues } from "./rules/duplicate-values";
+import { detectInconsistentFormats } from "./rules/inconsistent-formats";
 
 export type AnalyzeDatasetOptions = {
   /** Run duplicate-value detection only for this explicitly selected column. */
@@ -24,6 +25,7 @@ export function analyzeDataset(
       ...detectTrimWhitespace(dataset),
       ...detectDuplicateRows(dataset),
       ...detectMissingValues(dataset),
+      ...detectInconsistentFormats(dataset),
       ...duplicateValueIssues,
     ],
     analyzedRowCount: dataset.rows.length,

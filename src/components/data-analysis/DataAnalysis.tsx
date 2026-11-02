@@ -20,6 +20,7 @@ const RULE_LABELS: Record<string, string> = {
   "duplicate-rows": "Linhas duplicadas",
   "missing-values": "Valores ausentes",
   "duplicate-values": "Valores repetidos",
+  "inconsistent-formats": "Formatos inconsistentes",
 };
 
 function getIssueTitle(issue: DataIssue, columnNames: string[]): string {
@@ -44,6 +45,8 @@ function getIssueDescription(issue: DataIssue, columnNames: string[], columnCoun
       return `${issue.affectedCellCount} célula(s) estão vazias na coluna “${columnName}”. Valores compostos apenas por espaços são sinalizados separadamente.`;
     case "duplicate-values":
       return `O mesmo valor aparece em ${issue.affectedRowIds.length} linhas na coluna “${columnName}”. Revise os registros para decidir se representam duplicatas.`;
+    case "inconsistent-formats":
+      return issue.description;
     default: return issue.description;
   }
 }

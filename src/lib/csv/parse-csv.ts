@@ -10,6 +10,8 @@ export type ParseCsvResult = {
   delimiter: string;
 };
 
+export type ParseCsvOptions = { hasHeader?: boolean };
+
 export class CsvParseError extends Error {
   constructor(message: string) {
     super(message);
@@ -111,7 +113,7 @@ function validateQuoteSyntax(content: string, delimiter: SupportedDelimiter): vo
   }
 }
 
-export function parseCsv(content: string): ParseCsvResult {
+export function parseCsv(content: string, options: ParseCsvOptions = {}): ParseCsvResult {
   // A UTF-8 BOM is an encoding marker, not part of the first column name.
   const normalizedContent = content.replace(/^\uFEFF/, "");
 
@@ -140,30 +142,34 @@ export function parseCsv(content: string): ParseCsvResult {
     throw new CsvParseError("Nenhum registro encontrado.");
   }
 
-  const header = records[0];
-  if (!header || header.length === 0) {
-    throw new CsvParseError("Cabeçalho inválido.");
+  const hasHeader = options.hasHeader ?? true;
+  const firstRecord = records[0];
+  if (!firstRecord || firstRecord.length === 0) {
+    throw new CsvParseError("Não foi possível identificar as colunas do arquivo.");
   }
 
-  // Preserve header text exactly; trim is used only to detect blank names.
-  const columnNames = header.map((name) => name.replace(/^\uFEFF/, ""));
+  const rawColumnNames = hasHeader
+    ? firstRecord.map((name) => name.replace(/^\uFEFF/, ""))
+    : firstRecord.map((_, index) => `Coluna ${index + 1}`);
+  const columnNames = rawColumnNames;
 
   if (columnNames.some((name) => name.trim() === "")) {
-    throw new CsvParseError("Existem colunas sem nome no cabeçalho.");
+    throw new CsvParseError("Existem colunas sem nome no cabeçalho. Se o arquivo não tiver cabeçalho, desmarque essa opção.");
   }
 
   if (new Set(columnNames).size !== columnNames.length) {
-    throw new CsvParseError("Existem nomes de colunas duplicados.");
+    throw new CsvParseError("Existem nomes de colunas duplicados. Se a primeira linha contiver dados, desmarque a opção de cabeçalho.");
   }
 
-  const dataRecords = records.slice(1);
+  const dataRecords = hasHeader ? records.slice(1) : records;
   const invalidRowIndex = dataRecords.findIndex(
-    (record) => record.length !== header.length,
+    (record) => record.length !== firstRecord.length,
   );
 
   if (invalidRowIndex !== -1) {
+    const lineNumber = invalidRowIndex + (hasHeader ? 2 : 1);
     throw new CsvParseError(
-      `A linha ${invalidRowIndex + 2} possui uma quantidade de campos diferente do cabeçalho.`,
+      `A linha ${lineNumber} possui uma quantidade de campos diferente ${hasHeader ? "do cabeçalho" : "das demais linhas"}.`,
     );
   }
 

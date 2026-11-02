@@ -21,14 +21,25 @@ export default function App() {
   const [selectedIssue, setSelectedIssue] = useState<DataIssue | null>(null);
   const [datasetRevision, setDatasetRevision] = useState(0);
   const [previewPageIndex, setPreviewPageIndex] = useState(0);
+  const [appliedOperations, setAppliedOperations] = useState<
+    { id: string; label: string; description: string }[]
+  >([]);
+  const [undoneOperations, setUndoneOperations] = useState<
+    { id: string; label: string; description: string }[]
+  >([]);
 
   const HISTORY_LIMIT = 50;
 
   function handleSelectIssue(issue: DataIssue | null) {
     setSelectedIssue(issue);
     if (!issue || !dataset) return;
-    const firstAffectedIndex = dataset.rows.findIndex((row) => row.id === issue.affectedRowIds[0]);
-    if (firstAffectedIndex >= 0) setPreviewPageIndex(Math.floor(firstAffectedIndex / DATA_PREVIEW_PAGE_SIZE));
+    const firstAffectedIndex = dataset.rows.findIndex(
+      (row) => row.id === issue.affectedRowIds[0],
+    );
+    if (firstAffectedIndex >= 0)
+      setPreviewPageIndex(
+        Math.floor(firstAffectedIndex / DATA_PREVIEW_PAGE_SIZE),
+      );
   }
 
   function handleImport(importedDataset: Dataset, importedDelimiter: string) {
@@ -38,6 +49,8 @@ export default function App() {
     setOriginalDataset(importedDataset);
     setPastDatasets([]);
     setFutureDatasets([]);
+    setAppliedOperations([]);
+    setUndoneOperations([]);
     setDelimiter(importedDelimiter);
     setExportError(null);
     setExportSuccess(false);
@@ -52,6 +65,8 @@ export default function App() {
     setOriginalDataset(null);
     setPastDatasets([]);
     setFutureDatasets([]);
+    setAppliedOperations([]);
+    setUndoneOperations([]);
     setDelimiter(",");
     setExportError(null);
     setExportSuccess(false);
@@ -72,11 +87,24 @@ export default function App() {
       expectedRows,
     });
     if (nextDataset === dataset) {
-      setOperationNotice("Os registros mudaram desde a revisão. A remoção foi cancelada; analise os achados atualizados.");
+      setOperationNotice(
+        "Os registros mudaram desde a revisão. A remoção foi cancelada; analise os achados atualizados.",
+      );
       return;
     }
     setPastDatasets((current) => [...current, dataset].slice(-HISTORY_LIMIT));
     setFutureDatasets([]);
+    setAppliedOperations((current) =>
+      [
+        ...current,
+        {
+          id: crypto.randomUUID(),
+          label: "Remover registros duplicados",
+          description: ` ${rowIds.length} registro(s) removido(s)`,
+        },
+      ].slice(-HISTORY_LIMIT),
+    );
+    setUndoneOperations([]);
     setDataset(nextDataset);
     setDatasetRevision((current) => current + 1);
     setPreviewPageIndex(0);
@@ -94,11 +122,24 @@ export default function App() {
       changes,
     });
     if (nextDataset === dataset) {
-      setOperationNotice("Os valores mudaram desde a revisão. Nenhuma correção foi aplicada; revise a sugestão atualizada.");
+      setOperationNotice(
+        "Os valores mudaram desde a revisão. Nenhuma correção foi aplicada; revise a sugestão atualizada.",
+      );
       return;
     }
     setPastDatasets((current) => [...current, dataset].slice(-HISTORY_LIMIT));
     setFutureDatasets([]);
+    setAppliedOperations((current) =>
+      [
+        ...current,
+        {
+          id: crypto.randomUUID(),
+          label: "Remover espaços extras",
+          description: `${changes.length} valor(es) ajustado(s)`,
+        },
+      ].slice(-HISTORY_LIMIT),
+    );
+    setUndoneOperations([]);
     setDataset(nextDataset);
     setDatasetRevision((current) => current + 1);
     setPreviewPageIndex(0);
@@ -110,8 +151,14 @@ export default function App() {
   function handleUndo() {
     if (!dataset || pastDatasets.length === 0) return;
     const previousDataset = pastDatasets[pastDatasets.length - 1];
+    const operation = appliedOperations[appliedOperations.length - 1];
+    if (!operation) return;
     setPastDatasets((current) => current.slice(0, -1));
     setFutureDatasets((current) => [...current, dataset].slice(-HISTORY_LIMIT));
+    setUndoneOperations((current) =>
+      [...current, operation].slice(-HISTORY_LIMIT),
+    );
+    setAppliedOperations((current) => current.slice(0, -1));
     setDataset(previousDataset);
     setDatasetRevision((current) => current + 1);
     setPreviewPageIndex(0);
@@ -123,8 +170,14 @@ export default function App() {
   function handleRedo() {
     if (!dataset || futureDatasets.length === 0) return;
     const nextDataset = futureDatasets[futureDatasets.length - 1];
+    const operation = undoneOperations[undoneOperations.length - 1];
+    if (!operation) return;
     setFutureDatasets((current) => current.slice(0, -1));
     setPastDatasets((current) => [...current, dataset].slice(-HISTORY_LIMIT));
+    setAppliedOperations((current) =>
+      [...current, operation].slice(-HISTORY_LIMIT),
+    );
+    setUndoneOperations((current) => current.slice(0, -1));
     setDataset(nextDataset);
     setDatasetRevision((current) => current + 1);
     setPreviewPageIndex(0);
@@ -155,7 +208,9 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <div className="app-brand-mark" aria-hidden="true">C</div>
+        <div className="app-brand-mark" aria-hidden="true">
+          C
+        </div>
         <div>
           <p className="eyebrow">CSV WORKSPACE</p>
           <h1>CleanSheet</h1>
@@ -181,39 +236,118 @@ export default function App() {
               <p className="eyebrow">SEU ARQUIVO</p>
               <h2 id="preview-heading">Prévia dos dados</h2>
               <p>
-                Delimitador: {delimiter === "\t" ? "tabulação" : delimiter === ";" ? "ponto e vírgula" : "vírgula"}
+                Delimitador:{" "}
+                {delimiter === "\t"
+                  ? "tabulação"
+                  : delimiter === ";"
+                    ? "ponto e vírgula"
+                    : "vírgula"}
               </p>
             </div>
             <div className="toolbar-actions">
-              <div className="history-actions" aria-label="Histórico de alterações">
-                <button type="button" className="button button--secondary" onClick={handleUndo} disabled={pastDatasets.length === 0}>
+              <div
+                className="history-actions"
+                aria-label="Histórico de alterações"
+              >
+                <button
+                  type="button"
+                  className="button button--secondary"
+                  onClick={handleUndo}
+                  disabled={pastDatasets.length === 0}
+                >
                   Desfazer
                 </button>
-                <button type="button" className="button button--secondary" onClick={handleRedo} disabled={futureDatasets.length === 0}>
+                <button
+                  type="button"
+                  className="button button--secondary"
+                  onClick={handleRedo}
+                  disabled={futureDatasets.length === 0}
+                >
                   Refazer
                 </button>
               </div>
-              <CsvExport dataset={dataset} delimiter={delimiter} onExport={handleExport} />
-              <button type="button" className="button button--secondary" onClick={handleReset}>
+              <CsvExport
+                dataset={dataset}
+                delimiter={delimiter}
+                onExport={handleExport}
+              />
+              <button
+                type="button"
+                className="button button--secondary"
+                onClick={handleReset}
+              >
                 Importar outro arquivo
               </button>
             </div>
           </div>
 
-          {operationNotice && <p role="status" className="status-message status-message--warning">{operationNotice}</p>}
-          {exportError && <p role="alert" className="status-message status-message--error">{exportError}</p>}
-          {exportSuccess && <p role="status" className="status-message status-message--success">Download do CSV iniciado.</p>}
+          {operationNotice && (
+            <p role="status" className="status-message status-message--warning">
+              {operationNotice}
+            </p>
+          )}
+          {exportError && (
+            <p role="alert" className="status-message status-message--error">
+              {exportError}
+            </p>
+          )}
+          {exportSuccess && (
+            <p role="status" className="status-message status-message--success">
+              Download do CSV iniciado.
+            </p>
+          )}
 
-          <div className="dataset-version-summary" aria-label="Comparação entre arquivo original e resultado">
-            <span>Original: {originalDataset?.rows.length ?? 0} linhas × {originalDataset?.columns.length ?? 0} colunas</span>
-            <span>Resultado atual: {dataset.rows.length} linhas × {dataset.columns.length} colunas</span>
-            <span>{pastDatasets.length} {pastDatasets.length === 1 ? "alteração aplicada" : "alterações aplicadas"}</span>
+          <div
+            className="dataset-version-summary"
+            aria-label="Comparação entre arquivo original e resultado"
+          >
+            <span>
+              Original: {originalDataset?.rows.length ?? 0} linhas ×{" "}
+              {originalDataset?.columns.length ?? 0} colunas
+            </span>
+            <span>
+              Resultado atual: {dataset.rows.length} linhas ×{" "}
+              {dataset.columns.length} colunas
+            </span>
+            <span>
+              {appliedOperations.length}{" "}
+              {appliedOperations.length === 1
+                ? "alteração aplicada"
+                : "alterações aplicadas"}
+            </span>
           </div>
-          <p className="history-retention-note">O histórico de desfazer e refazer mantém as últimas 50 etapas.</p>
-          <DataAnalysis dataset={dataset} datasetRevision={datasetRevision} onSelectIssue={handleSelectIssue} onApplyTrim={handleApplyTrim} onRemoveDuplicateRows={handleRemoveDuplicateRows} />
+          <p className="history-retention-note">
+            O histórico de desfazer e refazer mantém as últimas 50 etapas.
+          </p>
+          <section
+            className="operation-log"
+            aria-labelledby="operation-log-heading"
+          >
+            <h3 id="operation-log-heading">Alterações aplicadas</h3>
+            {appliedOperations.length === 0 ? (
+              <p>Nenhuma operação aplicada até o momento.</p>
+            ) : (
+              <ol>
+                {appliedOperations.map((operation) => (
+                  <li key={operation.id}>
+                    <strong>{operation.label}</strong>
+                    <span>{operation.description}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+          <DataAnalysis
+            dataset={dataset}
+            datasetRevision={datasetRevision}
+            onSelectIssue={handleSelectIssue}
+            onApplyTrim={handleApplyTrim}
+            onRemoveDuplicateRows={handleRemoveDuplicateRows}
+          />
           {selectedIssue && (
             <p className="analysis-selection-note" role="status">
-              Prévia destacada: {selectedIssue.title}. Selecione “Limpar destaque” no achado para remover a marcação.
+              Prévia destacada: {selectedIssue.title}. Selecione “Limpar
+              destaque” no achado para remover a marcação.
             </p>
           )}
           <DataPreview
@@ -225,7 +359,9 @@ export default function App() {
             onPageChange={setPreviewPageIndex}
           />
           <p className="privacy-note">
-            {pastDatasets.length === 0 ? "Nenhuma correção foi aplicada. Esta prévia mantém os valores importados." : "Esta prévia mostra as alterações aprovadas. O arquivo original permanece preservado e você pode desfazer ou refazer as operações."}
+            {appliedOperations.length === 0
+              ? "Nenhuma correção foi aplicada. Esta prévia mantém os valores importados."
+              : "Esta prévia mostra as alterações aprovadas. O arquivo original permanece preservado e você pode desfazer ou refazer as operações."}
           </p>
         </section>
       )}

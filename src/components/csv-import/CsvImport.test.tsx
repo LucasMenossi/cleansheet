@@ -16,7 +16,9 @@ describe("CsvImport", () => {
       target: { files: [fileWithText("customers.csv", "name,city\nLucas,Curitiba")] },
     });
 
-    await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Importar arquivo" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Importar arquivo" }));
+    expect(onImport).toHaveBeenCalledTimes(1);
     expect(onImport.mock.calls[0][1]).toBe(",");
     expect(onImport.mock.calls[0][0].rows[0].values).toEqual({ name: "Lucas", city: "Curitiba" });
   });
@@ -28,8 +30,24 @@ describe("CsvImport", () => {
     const file = fileWithText("customers.csv", "name;city\nLucas;Curitiba");
     fireEvent.drop(dropzone, { dataTransfer: { files: [file] } });
 
-    await waitFor(() => expect(onImport).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Importar arquivo" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Importar arquivo" }));
+    expect(onImport).toHaveBeenCalledTimes(1);
     expect(onImport.mock.calls[0][1]).toBe(";");
+  });
+
+  it("preserves the first record when the CSV has no header", async () => {
+    const onImport = vi.fn();
+    render(<CsvImport onImport={onImport} />);
+    fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), {
+      target: { files: [fileWithText("without-header.csv", "Lucas,Curitiba\nAna,Londrina")] },
+    });
+    await screen.findByRole("button", { name: "Importar arquivo" });
+    fireEvent.click(screen.getByRole("checkbox", { name: /primeira linha contém/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Importar arquivo" }));
+    expect(onImport.mock.calls[0][0].columns.map((column: { name: string }) => column.name)).toEqual(["Coluna 1", "Coluna 2"]);
+    expect(onImport.mock.calls[0][0].rows).toHaveLength(2);
+    expect(onImport.mock.calls[0][0].rows[0].values).toEqual({ "Coluna 1": "Lucas", "Coluna 2": "Curitiba" });
   });
 
   it("shows a clear error for a non-CSV file", async () => {

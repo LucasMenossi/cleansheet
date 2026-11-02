@@ -98,3 +98,13 @@ The predictable whitespace correction is applied only after explicit review. Dup
 - Duplicate-row removal captures a snapshot of every record shown in the review. If a reviewed record changes or disappears before confirmation, the removal is rejected. The transformation layer also prevents removing every record in a reviewed duplicate group.
 - Analysis uses React's deferred rendering so higher-priority interactions can proceed while a changed dataset is re-analyzed. Review and navigation actions are temporarily disabled while the displayed findings are catching up.
 - The data preview renders 100 rows per page instead of mounting every row at once. Selecting a finding navigates to the page containing its first affected record and scrolls the row into view.
+
+## Header selection and format consistency
+
+- The import flow asks the user to confirm whether the first CSV record contains column names. If it does not, the first record is retained as data and generic names (`Coluna 1`, `Coluna 2`, ...) are generated.
+- The format-consistency rule looks for a clear majority pattern in non-empty values for email, date (`YYYY-MM-DD` or `DD/MM/YYYY`), and numeric formats. It reports outliers as warnings only; it never changes values or proposes an automatic correction.
+- Format detection is heuristic. It should be interpreted as a prompt for human review, not as proof that a value is invalid.
+
+## Applied operation summary
+
+The workspace lists approved operations and the number of affected values or records. Undo removes the reverted operation from the applied list, redo restores it, and a new operation clears the redo history. The summary is UI metadata and is not inserted into the exported CSV, so the exported dataset remains a regular CSV file.
