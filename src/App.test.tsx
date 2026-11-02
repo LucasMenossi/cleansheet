@@ -77,3 +77,37 @@ it("reviews and applies selected whitespace fixes, then supports undo and redo",
   fireEvent.click(screen.getByRole("button", { name: "Refazer" }));
   expect(screen.getByText("Maria")).toBeInTheDocument();
 });
+
+
+it("reviews duplicate values, removes only selected records, and supports undo and redo", async () => {
+  const csv = "name,email\nMaria,maria@example.com\nJoão,shared@example.com\nAna,shared@example.com";
+  const file = new File([csv], "customers.csv", { type: "text/csv" });
+  Object.defineProperty(file, "text", { value: vi.fn().mockResolvedValue(csv) });
+
+  render(<App />);
+  fireEvent.change(screen.getByLabelText("Selecionar arquivo CSV"), { target: { files: [file] } });
+  expect(await screen.findByRole("heading", { name: "Achados na sua planilha" })).toBeInTheDocument();
+
+  const duplicateColumn = screen.getByLabelText("Verificar valores repetidos em uma coluna") as HTMLSelectElement;
+  const emailOption = Array.from(duplicateColumn.options).find((option) => option.textContent === "email");
+  expect(emailOption).toBeDefined();
+  fireEvent.change(duplicateColumn, { target: { value: emailOption?.value } });
+
+  fireEvent.click(screen.getByRole("button", { name: "Revisar registros" }));
+  const reviewCheckboxes = document.querySelectorAll<HTMLInputElement>(".duplicate-review input[type='checkbox']");
+  expect(reviewCheckboxes).toHaveLength(2);
+  fireEvent.click(reviewCheckboxes[0]);
+  fireEvent.click(screen.getByRole("button", { name: "Remover 1 registro selecionado" }));
+
+  expect(screen.getByText("2 linhas × 2 colunas", { exact: false })).toBeInTheDocument();
+  expect(screen.queryByText("João")).not.toBeInTheDocument();
+  expect(screen.getByText("Ana")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
+  expect(screen.getByText("João")).toBeInTheDocument();
+  expect(screen.getByText("Ana")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Refazer" }));
+  expect(screen.queryByText("João")).not.toBeInTheDocument();
+  expect(screen.getByText("Ana")).toBeInTheDocument();
+});

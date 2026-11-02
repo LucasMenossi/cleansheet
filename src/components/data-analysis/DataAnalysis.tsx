@@ -4,12 +4,14 @@ import type { DataIssue } from "../../features/analysis/types";
 import type { Dataset } from "../../features/dataset/types";
 import type { CellChange } from "../../features/transformations/types";
 import { TrimWhitespaceReview } from "./TrimWhitespaceReview";
+import { DuplicateRowsReview } from "./DuplicateRowsReview";
 import "./data-analysis.css";
 
 type DataAnalysisProps = {
   dataset: Dataset;
   onSelectIssue: (issue: DataIssue | null) => void;
   onApplyTrim: (changes: CellChange[]) => void;
+  onRemoveDuplicateRows: (rowIds: string[]) => void;
 };
 
 const RULE_LABELS: Record<string, string> = {
@@ -45,7 +47,7 @@ function getIssueDescription(issue: DataIssue, columnNames: string[], columnCoun
   }
 }
 
-export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim }: DataAnalysisProps) {
+export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim, onRemoveDuplicateRows }: DataAnalysisProps) {
   const [duplicateColumnId, setDuplicateColumnId] = useState("");
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
   const [reviewingIssueId, setReviewingIssueId] = useState<string | null>(null);
@@ -143,7 +145,7 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim }: DataAnalys
                       Linhas do arquivo: {rowNumbers.join(", ")}
                     </p>
                   </div>
-                  {issue.ruleId === "trim-whitespace" && (
+                  {(issue.ruleId === "trim-whitespace" || issue.ruleId === "duplicate-rows" || issue.ruleId === "duplicate-values") && (
                     <div className="analysis-issue__suggestion-actions">
                       {dismissedSuggestionIds.includes(issue.id) ? (
                         <button
@@ -160,7 +162,9 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim }: DataAnalys
                             className="button button--primary"
                             onClick={() => setReviewingIssueId(reviewingIssueId === issue.id ? null : issue.id)}
                           >
-                            {reviewingIssueId === issue.id ? "Fechar revisão" : "Revisar correção"}
+                            {reviewingIssueId === issue.id
+                              ? "Fechar revisão"
+                              : issue.ruleId === "trim-whitespace" ? "Revisar correção" : "Revisar registros"}
                           </button>
                           <button
                             type="button"
@@ -196,7 +200,19 @@ export function DataAnalysis({ dataset, onSelectIssue, onApplyTrim }: DataAnalys
                       }}
                     />
                   )}
-                  {issue.ruleId === "trim-whitespace" && dismissedSuggestionIds.includes(issue.id) && (
+                  {(issue.ruleId === "duplicate-rows" || issue.ruleId === "duplicate-values") && reviewingIssueId === issue.id && !dismissedSuggestionIds.includes(issue.id) && (
+                    <DuplicateRowsReview
+                      issue={issue}
+                      dataset={dataset}
+                      onRemove={(rowIds) => {
+                        onRemoveDuplicateRows(rowIds);
+                        setReviewingIssueId(null);
+                        setSelectedIssueId(null);
+                        onSelectIssue(null);
+                      }}
+                    />
+                  )}
+                  {dismissedSuggestionIds.includes(issue.id) && (
                     <p className="analysis-issue__dismissed">Sugestão descartada. Nenhum dado foi alterado.</p>
                   )}
                 </article>

@@ -64,3 +64,21 @@
 .analysis-issue__main { flex: 1 1 100%; }
 .analysis-issue__suggestion-actions { width: 100%; }
 .trim-review { flex: 1 1 100%; }
+
+.duplicate-review { display: grid; gap: 12px; flex: 1 1 100%; width: 100%; margin-top: 14px; padding: 14px; border: 1px solid #e5d7bd; border-radius: 10px; background: #fffaf2; }
+.duplicate-review__header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.duplicate-review__header strong { color: var(--color-ink); font-size: 13px; }
+.duplicate-review__header p { margin: 4px 0 0; color: var(--color-muted); font-size: 12px; }
+.duplicate-review__header > span { color: #79551f; font-size: 12px; font-weight: 650; }
+.duplicate-review__list { display: grid; gap: 8px; }
+.duplicate-review__item { display: grid; grid-template-columns: 18px 64px minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 10px; border: 1px solid #eadfce; border-radius: 8px; background: #fff; cursor: pointer; }
+.duplicate-review__item input { width: 16px; height: 16px; margin-top: 2px; accent-color: #a15b36; }
+.duplicate-review__row { color: #647067; font-size: 11px; font-weight: 650; }
+.duplicate-review__values { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 7px; min-width: 0; }
+.duplicate-review__values > span { display: grid; gap: 3px; min-width: 0; }
+.duplicate-review__values small { color: var(--color-muted); font-size: 10px; }
+.duplicate-review__values code { padding: 3px 6px; border-radius: 4px; color: #344238; background: #f0f3f0; font-size: 12px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.duplicate-review__decision { padding: 3px 7px; border-radius: 5px; color: #286344; background: #eaf5ed; font-size: 10px; font-weight: 700; }
+.duplicate-review__decision--remove { color: #8a3f2d; background: #fae9e4; }
+.duplicate-review__impact { padding: 8px 10px; border-radius: 7px; color: #6c542f; background: #f7efdf; font-size: 12px; }
+@media (max-width: 560px) { .duplicate-review__item { grid-template-columns: 18px minmax(0, 1fr) auto; } .duplicate-review__row { grid-column: 2; } .duplicate-review__values { grid-column: 2 / -1; } .duplicate-review__decision { grid-column: 3; grid-row: 1; } }

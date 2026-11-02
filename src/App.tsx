@@ -40,6 +40,22 @@ export default function App() {
     setSelectedIssue(null);
   }
 
+  function handleRemoveDuplicateRows(rowIds: string[]) {
+    if (!dataset || rowIds.length === 0) return;
+    const nextDataset = applyTransformation(dataset, {
+      id: crypto.randomUUID(),
+      type: "remove-duplicate-rows",
+      label: "Remover registros duplicados",
+      rowIds,
+    });
+    if (nextDataset === dataset) return;
+    setPastDatasets((current) => [...current, dataset]);
+    setFutureDatasets([]);
+    setDataset(nextDataset);
+    setSelectedIssue(null);
+    setExportSuccess(false);
+  }
+
   function handleApplyTrim(changes: CellChange[]) {
     if (!dataset || changes.length === 0) return;
     const nextDataset = applyTransformation(dataset, {
@@ -151,7 +167,7 @@ export default function App() {
             <span>Resultado atual: {dataset.rows.length} linhas × {dataset.columns.length} colunas</span>
             <span>{pastDatasets.length} {pastDatasets.length === 1 ? "alteração aplicada" : "alterações aplicadas"}</span>
           </div>
-          <DataAnalysis dataset={dataset} onSelectIssue={setSelectedIssue} onApplyTrim={handleApplyTrim} />
+          <DataAnalysis dataset={dataset} onSelectIssue={setSelectedIssue} onApplyTrim={handleApplyTrim} onRemoveDuplicateRows={handleRemoveDuplicateRows} />
           {selectedIssue && (
             <p className="analysis-selection-note" role="status">
               Prévia destacada: {selectedIssue.title}. Selecione “Limpar destaque” no achado para remover a marcação.

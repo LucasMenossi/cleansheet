@@ -2,8 +2,21 @@ import type { Dataset } from "../dataset/types";
 import { getCellValue } from "../dataset/get-cell-value";
 import type { Transformation } from "./types";
 
-/** Applies only explicitly approved, still-current cell changes immutably. */
+/** Applies only explicitly approved, still-current transformations immutably. */
 export function applyTransformation(dataset: Dataset, transformation: Transformation): Dataset {
+  if (transformation.type === "remove-duplicate-rows") {
+    const existingRowIds = new Set(dataset.rows.map((row) => row.id));
+    const rowIdsToRemove = new Set(transformation.rowIds.filter((rowId) => existingRowIds.has(rowId)));
+
+    // A removal must never leave the dataset empty or remove every row in a review group.
+    if (rowIdsToRemove.size === 0 || rowIdsToRemove.size >= dataset.rows.length) return dataset;
+
+    return {
+      columns: dataset.columns,
+      rows: dataset.rows.filter((row) => !rowIdsToRemove.has(row.id)),
+    };
+  }
+
   if (transformation.changes.length === 0) return dataset;
 
   const validChanges = transformation.changes.filter((change) => {

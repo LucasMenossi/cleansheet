@@ -35,6 +35,28 @@ describe("applyTransformation", () => {
     expect(applyTransformation(dataset, { ...transformation, changes: [] })).toBe(dataset);
   });
 
+  it("removes only explicitly selected duplicate rows immutably", () => {
+    const result = applyTransformation(dataset, {
+      id: "remove-1",
+      type: "remove-duplicate-rows",
+      label: "Remover registros duplicados",
+      rowIds: ["row-1"],
+    });
+
+    expect(result.rows.map((row) => row.id)).toEqual(["row-2"]);
+    expect(dataset.rows).toHaveLength(2);
+    expect(result.columns).toBe(dataset.columns);
+  });
+
+  it("does not remove every row from the dataset", () => {
+    expect(applyTransformation(dataset, {
+      id: "remove-all",
+      type: "remove-duplicate-rows",
+      label: "Remover registros duplicados",
+      rowIds: ["row-1", "row-2"],
+    })).toBe(dataset);
+  });
+
   it("ignores changes that refer to an unknown row or column", () => {
     const result = applyTransformation(dataset, {
       ...transformation,

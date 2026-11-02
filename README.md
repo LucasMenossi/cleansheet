@@ -81,3 +81,12 @@ The analysis rules read values using the stable column ID when present and fall 
 - The preview reports original and current row/column counts.
 
 Only the predictable whitespace correction is included in this first Phase 3 slice. Duplicate-row resolution and other potentially destructive decisions remain manual and are not automated.
+
+### Duplicate review (Phase 3 — next slice)
+
+- Exact duplicate-row findings and selected-column repeated-value findings expose a review panel with the complete values of each affected record.
+- No row is preselected for deletion. Users explicitly mark the records to remove, while the interface requires at least one record in the duplicate group to remain.
+- The panel previews the impact before the user confirms the removal.
+- `remove-duplicate-rows` transformations remove only the explicitly selected row IDs and return a new dataset. The original dataset remains unchanged.
+- Duplicate resolution participates in the same undo/redo history as whitespace corrections.
+- Repeated values in a selected column are only candidates: the user must inspect the other columns before deciding whether a record should be removed.
